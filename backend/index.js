@@ -71,5 +71,5 @@ wss.on('connection', (ws) => {
   });
 });
 
-const PORT = 3002;
+const PORT = 3001;
 server.listen(PORT, () => console.log(`Serveur SSH en écoute sur le port ${PORT}`));
