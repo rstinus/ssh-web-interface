@@ -13,7 +13,7 @@ app.use(express.static(path.join(__dirname, "../frontend/dist")));
 app.use(express.json()); // Ajouter le middleware pour parser le JSON
 
 // Pour toute autre route, renvoie index.html
-app.get("*", (req, res) => {
+app.use((req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
 });
 
