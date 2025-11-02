@@ -35,7 +35,31 @@ export default function App() {
   const connectSSH = () => {
     if (!host || !username || !password) return;
 
-    wsRef.current = new WebSocket("ws://localhost:3001");
+    // utilise le domaine courant
+    const baseUrl = window.location.origin.replace(/^http/, "ws");
+    wsRef.current = new WebSocket(`${baseUrl}`);
+
+    // pour les requêtes HTTP
+    const apiUrl = window.location.origin;
+    fetch(`${apiUrl}/api/session`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        host,
+        username,
+        password
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log('Session created:', data);
+    })
+    .catch(error => {
+      console.error('Error creating session:', error);
+      termRef.current.writeln(`\r\nErreur de connexion: ${error.message}\r\n`);
+    });
 
     wsRef.current.onopen = () => {
       termRef.current.writeln("Connexion au serveur SSH...");
