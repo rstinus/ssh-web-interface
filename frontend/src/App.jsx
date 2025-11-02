@@ -32,13 +32,20 @@ export default function App() {
     return () => term.dispose(); // cleanup
   }, []);
 
-  const connectSSH = () => {
+    const connectSSH = () => {
     if (!host || !username || !password) return;
 
     // Correction de l'URL WebSocket
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-    const host = window.location.host; // ex: sshwebinterface-production.up.railway.app
+    let host = window.location.host;
+
+    // En local, on force le port 3001 (backend)
+    if (host.includes("localhost")) {
+      host = "localhost:3001";
+    }
+
     wsRef.current = new WebSocket(`${protocol}://${host}`);
+
 
 
     // pour les requêtes HTTP
