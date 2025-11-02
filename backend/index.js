@@ -1,21 +1,18 @@
-const express = require('express');
-const http = require('http');
-const WebSocket = require('ws');
-const { Client } = require('ssh2');
+const express = require("express");
+const http = require("http");
+const WebSocket = require("ws");
+const { Client } = require("ssh2");
 const path = require("path");
 
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
-// Sert les fichiers statiques du frontend
+// Correction ici : __dirname est déjà dispo en CommonJS
 app.use(express.static(path.join(__dirname, "../frontend/dist")));
-app.use(express.json()); // Ajouter le middleware pour parser le JSON
+app.use(express.json());
 
 // Pour toute autre route, renvoie index.html
-app.use((req, res) => {
-  res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
-});
 
 app.post('/api/session', (req, res) => {
   const { host, username, password } = req.body;
@@ -79,6 +76,10 @@ wss.on('connection', (ws) => {
   ws.on('close', () => {
     if (sshStream) sshStream.end();
   });
+});
+
+app.use((req, res) => {
+  res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
 });
 
 console.log("PORT utilisé :", process.env.PORT);
