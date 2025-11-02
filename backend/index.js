@@ -1,0 +1,66 @@
+const express = require('express');
+const http = require('http');
+const WebSocket = require('ws');
+const { Client } = require('ssh2');
+
+const app = express();
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
+
+wss.on('connection', (ws) => {
+  console.log('[MSG] Nouveau client WebSocket connecté');
+
+  let sshStream;
+
+  ws.on('message', (message) => {
+    const msg = JSON.parse(message.toString());
+
+    // Quand le navigateur demande la connexion SSH
+    if (msg.type === 'connect') {
+      const { host, username, password } = msg;
+      const conn = new Client();
+
+      conn.on('ready', () => {
+        console.log(`_/ SSH connecté à ${host}`);
+        conn.shell((err, stream) => {
+          if (err) {
+            ws.send(JSON.stringify({ type: 'error', error: err.message }));
+            return;
+          }
+          sshStream = stream;
+
+          // Quand le serveur envoie des données
+          stream.on('data', (data) => {
+            ws.send(JSON.stringify({ type: 'data', data: data.toString() }));
+          });
+
+          stream.stderr.on('data', (data) => {
+            ws.send(JSON.stringify({ type: 'data', data: data.toString() }));
+          });
+
+          stream.on('close', () => {
+            ws.send(JSON.stringify({ type: 'info', data: '\r\n X Connexion fermée\r\n' }));
+            conn.end();
+          });
+        });
+      })
+      .on('error', (err) => {
+        console.error('Erreur SSH :', err.message);
+        ws.send(JSON.stringify({ type: 'error', error: err.message }));
+      })
+      .connect({ host, username, password });
+    }
+
+    // Quand le navigateur envoie une touche
+    else if (msg.type === 'stdin' && sshStream) {
+      sshStream.write(msg.data);
+    }
+  });
+
+  ws.on('close', () => {
+    if (sshStream) sshStream.end();
+  });
+});
+
+const PORT = 3001;
+server.listen(PORT, () => console.log(`Serveur SSH en écoute sur le port ${PORT}`));
