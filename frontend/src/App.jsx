@@ -36,7 +36,7 @@ export default function App() {
     if (!host || !username || !password) return;
 
     // Correction de l'URL WebSocket
-    const wsUrl = `ws://${window.location.hostname}:3000`;
+    const wsUrl = `ws://${window.location.hostname}:3001`;
     wsRef.current = new WebSocket(wsUrl);
 
     // pour les requêtes HTTP
