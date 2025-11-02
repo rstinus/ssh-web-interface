@@ -36,8 +36,10 @@ export default function App() {
     if (!host || !username || !password) return;
 
     // Correction de l'URL WebSocket
-    const wsUrl = `ws://${window.location.hostname}:3001`;
-    wsRef.current = new WebSocket(wsUrl);
+    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+    const host = window.location.host; // ex: sshwebinterface-production.up.railway.app
+    wsRef.current = new WebSocket(`${protocol}://${host}`);
+
 
     // pour les requêtes HTTP
     const apiUrl = window.location.origin;
