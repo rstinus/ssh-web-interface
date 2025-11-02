@@ -35,9 +35,9 @@ export default function App() {
   const connectSSH = () => {
     if (!host || !username || !password) return;
 
-    // utilise le domaine courant
-    const baseUrl = window.location.origin.replace(/^http/, "ws");
-    wsRef.current = new WebSocket(`${baseUrl}`);
+    // Correction de l'URL WebSocket
+    const wsUrl = `ws://${window.location.hostname}:3000`;
+    wsRef.current = new WebSocket(wsUrl);
 
     // pour les requêtes HTTP
     const apiUrl = window.location.origin;
@@ -62,17 +62,21 @@ export default function App() {
     });
 
     wsRef.current.onopen = () => {
+      console.log("WebSocket connecté");
       termRef.current.writeln("Connexion au serveur SSH...");
       wsRef.current.send(
         JSON.stringify({ type: "connect", host, username, password })
       );
     };
 
-    wsRef.current.onmessage = (event) => {
-      const msg = JSON.parse(event.data);
-      if (msg.type === "data") termRef.current.write(msg.data);
-      else if (msg.type === "error") termRef.current.writeln(`\r\n X ${msg.error}\r\n`);
-      else if (msg.type === "info") termRef.current.writeln(msg.data);
+    wsRef.current.onerror = (error) => {
+      console.error("WebSocket error:", error);
+      termRef.current.writeln("\r\nErreur de connexion WebSocket\r\n");
+    };
+
+    wsRef.current.onclose = () => {
+      console.log("WebSocket fermé");
+      termRef.current.writeln("\r\nConnexion WebSocket fermée\r\n");
     };
 
     termRef.current.onData((data) => {

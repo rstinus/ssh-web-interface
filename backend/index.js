@@ -10,10 +10,20 @@ const wss = new WebSocket.Server({ server });
 
 // Sert les fichiers statiques du frontend
 app.use(express.static(path.join(__dirname, "../frontend/dist")));
+app.use(express.json()); // Ajouter le middleware pour parser le JSON
 
 // Pour toute autre route, renvoie index.html
 app.get(/.*/, (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
+});
+
+app.post('/api/session', (req, res) => {
+  const { host, username, password } = req.body;
+  // Validation basique
+  if (!host || !username || !password) {
+    return res.status(400).json({ error: 'Paramètres manquants' });
+  }
+  res.json({ status: 'success', message: 'Session initiée' });
 });
 
 wss.on('connection', (ws) => {
@@ -71,5 +81,5 @@ wss.on('connection', (ws) => {
   });
 });
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, "0.0.0.0");
+const PORT = process.env.PORT || 3001;
+server.listen(PORT, () => console.log(`Serveur SSH en écoute sur le port ${PORT}`));
