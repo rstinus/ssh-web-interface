@@ -2,10 +2,19 @@ const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
 const { Client } = require('ssh2');
+const path = require("path");
 
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
+
+// Sert les fichiers statiques du frontend
+app.use(express.static(path.join(__dirname, "../frontend/dist")));
+
+// Pour toute autre route, renvoie index.html
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
+});
 
 wss.on('connection', (ws) => {
   console.log('[MSG] Nouveau client WebSocket connecté');
