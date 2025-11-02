@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Terminal } from "xterm";
 import "xterm/css/xterm.css";
+import { WS_URL } from "./config";
 
 export default function App() {
   const [host, setHost] = useState("");
@@ -32,70 +33,62 @@ export default function App() {
     return () => term.dispose(); // cleanup
   }, []);
 
-    const connectSSH = () => {
-    if (!host || !username || !password) return;
+    const connectSSH = async () => {
+  // Construire l’URL du backend dynamiquement
+  const API_URL =
+    window.location.hostname === "localhost"
+      ? "http://localhost:3001"
+      : window.location.origin;
 
-    // Correction de l'URL WebSocket
-    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-    let host = window.location.host;
-
-    // En local, on force le port 3001 (backend)
-    if (host.includes("localhost")) {
-      host = "localhost:3001";
-    }
-
-    wsRef.current = new WebSocket(`${protocol}://${host}`);
-
-
-
-    // pour les requêtes HTTP
-    const apiUrl = window.location.origin;
-    fetch(`${apiUrl}/api/session`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        host,
-        username,
-        password
-      })
-    })
-    .then(response => response.json())
-    .then(data => {
-      console.log('Session created:', data);
-    })
-    .catch(error => {
-      console.error('Error creating session:', error);
-      termRef.current.writeln(`\r\nErreur de connexion: ${error.message}\r\n`);
+  // 1️⃣ Appel API pour créer une session
+  try {
+    const res = await fetch(`${API_URL}/api/session`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ host, username, password }),
     });
 
-    wsRef.current.onopen = () => {
-      console.log("WebSocket connecté");
-      termRef.current.writeln("Connexion au serveur SSH...");
-      wsRef.current.send(
-        JSON.stringify({ type: "connect", host, username, password })
-      );
-    };
+    const data = await res.json();
+    console.log("Session créée :", data);
+  } catch (err) {
+    console.error("Erreur lors de la création de session :", err);
+    termRef.current.writeln(`\r\n❌ Erreur API: ${err.message}\r\n`);
+    return;
+  }
 
-    wsRef.current.onerror = (error) => {
-      console.error("WebSocket error:", error);
-      termRef.current.writeln("\r\nErreur de connexion WebSocket\r\n");
-    };
+  // 2️⃣ Connexion WebSocket après l'API
+  const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+  const WS_URL =
+    window.location.hostname === "localhost"
+      ? "ws://localhost:3001"
+      : `${protocol}://${window.location.host}`;
 
-    wsRef.current.onclose = () => {
-      console.log("WebSocket fermé");
-      termRef.current.writeln("\r\nConnexion WebSocket fermée\r\n");
-    };
+  wsRef.current = new WebSocket(WS_URL);
 
-    termRef.current.onData((data) => {
-      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-        wsRef.current.send(JSON.stringify({ type: "stdin", data }));
-      }
-    });
-
-    setConnected(true);
+  wsRef.current.onopen = () => {
+    termRef.current.writeln("Connexion au serveur SSH...");
+    wsRef.current.send(
+      JSON.stringify({ type: "connect", host, username, password })
+    );
   };
+
+  wsRef.current.onmessage = (event) => {
+    const msg = JSON.parse(event.data);
+    if (msg.type === "data") termRef.current.write(msg.data);
+    else if (msg.type === "error")
+      termRef.current.writeln(`\r\n❌ ${msg.error}\r\n`);
+    else if (msg.type === "info") termRef.current.writeln(msg.data);
+  };
+
+  termRef.current.onData((data) => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: "stdin", data }));
+    }
+  });
+
+  setConnected(true);
+};
+
 
   return (
     <div style={{ padding: "20px", fontFamily: "monospace", color: "#fff", backgroundColor: "#111", height: "100vh" }}>

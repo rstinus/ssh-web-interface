@@ -13,7 +13,7 @@ app.use(express.static(path.join(__dirname, "../frontend/dist")));
 app.use(express.json()); // Ajouter le middleware pour parser le JSON
 
 // Pour toute autre route, renvoie index.html
-app.get(/.*/, (req, res) => {
+app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
 });
 
@@ -81,5 +81,6 @@ wss.on('connection', (ws) => {
   });
 });
 
+console.log("PORT utilisé :", process.env.PORT);
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT}`));
