@@ -2,11 +2,14 @@
   "name": "ssh-web-interface",
   "version": "1.0.0",
   "scripts": {
-    "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
+    "start": "node backend/index.js",
     "start:backend": "cd backend && node index.js",
     "start:frontend": "cd frontend && npm run dev"
   },
   "devDependencies": {
     "concurrently": "^9.0.0"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
   }
 }

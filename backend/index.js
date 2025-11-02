@@ -12,7 +12,7 @@ const wss = new WebSocket.Server({ server });
 app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
 // Pour toute autre route, renvoie index.html
-app.get("*", (req, res) => {
+app.get(/.*/, (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
 });
 
@@ -71,5 +71,5 @@ wss.on('connection', (ws) => {
   });
 });
 
-const PORT = 3001;
+const PORT = 3002;
 server.listen(PORT, () => console.log(`Serveur SSH en écoute sur le port ${PORT}`));
