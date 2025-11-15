@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="for">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../App.css">
+</head>
+<body>
+    <select id="commande">
+        <option value="ls">Lister les fichiers</option>
+        <option value="mkdir">Créer un dossier</option>
+        <option value="rm">Supprimer un fichier</option>
+    </select>
+    <input type="text" id="argument" placeholder="argument de la commande">
+    <button onclick="envoyerCommande()">Exécuter</button>
+    <script>
+        function envoyerCommande() {
+            const commande = document.getElementById('commande').value;
+            const argument = document.getElementById('argument').value;
+            const commandeComplete = `${commande} ${argument}`;
+
+            // Envoyer au backend via fetch ou autre méthode
+            fetch('/executer-commande', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ commande: commandeComplete })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(`Résultat : ${data.resultat}`);
+            });
+        }
+    </script>
+</body>
+</html>

@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { Terminal } from "xterm";
 import "xterm/css/xterm.css";
 
-export default function TerminalView({ host, username, password }) {
+export default function TerminalView({ host, username, password, initialText }) {
   const containerRef = useRef(null);
   const termRef = useRef(null);
   const wsRef = useRef(null);
@@ -21,7 +21,11 @@ export default function TerminalView({ host, username, password }) {
     term.open(containerRef.current);
     termRef.current = term;
 
-    term.writeln("Terminal SSH Web");
+    // affiche le message initial si fourni
+    if (initialText) {
+      term.writeln(initialText);
+    }
+
     term.writeln("Connexion...\n");
 
     startWebSocket(term);
@@ -65,7 +69,7 @@ export default function TerminalView({ host, username, password }) {
     <div
       ref={containerRef}
       style={{
-        height: "500px",
+        height: "100%",
         width: "100%",
         background: "#000",
         borderRadius: "5px",

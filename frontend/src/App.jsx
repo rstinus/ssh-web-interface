@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import LoginForm from "./components/LoginForm";
 import TerminalView from "./components/TerminalView";
+import "./App.css";
 
 export default function App() {
   const [host, setHost] = useState("");
@@ -9,19 +10,30 @@ export default function App() {
   const [connected, setConnected] = useState(false);
 
   const connectSSH = async () => {
+    if (!host || !username || !password) {
+      alert("Remplissez tous les champs");
+      return;
+    }
+
     const API_URL =
       window.location.hostname === "localhost"
         ? "http://localhost:3001"
         : window.location.origin;
 
     try {
-      await fetch(`${API_URL}/api/session`, {
+      const res = await fetch(`${API_URL}/api/session`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ host, username, password }),
       });
 
-      setConnected(true);
+      const data = await res.json();
+
+      if (data.success) {
+        setConnected(true);
+      } else {
+        alert("Erreur : " + data.error);
+      }
     } catch (err) {
       alert("Erreur : " + err.message);
     }
@@ -30,10 +42,13 @@ export default function App() {
   return (
     <div
       style={{
-        padding: "20px",
-        backgroundColor: "#000",
-        color: "#fff",
+        width: "100%",
         height: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        margin: 0,
+        padding: 0,
       }}
     >
       {!connected ? (
@@ -47,12 +62,21 @@ export default function App() {
           onConnect={connectSSH}
         />
       ) : (
-        <TerminalView
-          host={host}
-          username={username}
-          password={password}
-        />
+        <div>
+          <iframe class="inputCmd"
+            src="/InputCmd.html"
+            title="InputCmd"
+          />
+          <TerminalView
+            host={host}
+            username={username}
+            password={password}
+            initialText={"Entrez vos identifiants ci-dessus pour vous connecter.\r\n"}
+          />
+        </div>
       )}
     </div>
   );
 }
+
+        

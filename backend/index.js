@@ -3,10 +3,13 @@ const http = require("http");
 const WebSocket = require("ws");
 const { Client } = require("ssh2");
 const path = require("path");
-
+const { exec } = require('child_process');
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
+const cors = require('cors');
+
+app.use(cors());
 
 // Correction ici : __dirname est déjà dispo en CommonJS
 app.use(express.static(path.join(__dirname, "../frontend/dist")));
@@ -16,11 +19,46 @@ app.use(express.json());
 
 app.post('/api/session', (req, res) => {
   const { host, username, password } = req.body;
+
   // Validation basique
   if (!host || !username || !password) {
-    return res.status(400).json({ error: 'Paramètres manquants' });
+    return res.status(400).json({ 
+      success: false, 
+      error: 'Paramètres manquants' 
+    });
   }
-  res.json({ status: 'success', message: 'Session initiée' });
+
+  // Vérifiez les identifiants (exemple simple)
+  if (username === "rstinusssh" && password === "SSH27102006*") {
+    return res.json({ 
+      success: true, 
+      message: 'Connexion réussie',
+      sessionId: Date.now() 
+    });
+  }
+
+  // Identifiants incorrects
+  res.status(401).json({ 
+    success: false, 
+    error: 'Identifiants incorrects' 
+  });
+});
+
+app.post('/executer-commande', (req, res) => {
+  const commande = req.body.commande;
+
+  // Validation sécurisé : n'autoriser que certaines commandes et arguments
+  const commandesAutorisees = ['ls', 'mkdir', 'rm'];
+  const [cmd, ...args] = commande.split(' ');
+  if (!commandesAutorisees.includes(cmd)) {
+    return res.status(400).json({ resultat: 'Commande non autorisée.' });
+  }
+
+  // Exécution sécurisée
+  exec(commande, (error, stdout, stderr) => {
+    if (error) return res.json({ resultat: `Erreur : ${error.message}` });
+    res.json({ resultat: stdout || stderr });
+  });
 });
 
 wss.on('connection', (ws) => {
