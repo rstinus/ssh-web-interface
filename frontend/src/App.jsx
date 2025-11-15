@@ -15,7 +15,6 @@ export default function App() {
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // Initialisation du terminal
     const term = new Terminal({
       cols: 100,
       rows: 28,
