@@ -14,7 +14,7 @@ export default function App() {
       alert("Remplissez tous les champs");
       return;
     }
-
+    
     const API_URL =
       window.location.hostname === "localhost"
         ? "http://localhost:3001"
@@ -28,7 +28,7 @@ export default function App() {
       });
 
       const data = await res.json();
-
+      console.log("Réponse du backend :", data);
       if (data.success) {
         setConnected(true);
       } else {
@@ -37,6 +37,14 @@ export default function App() {
     } catch (err) {
       alert("Erreur : " + err.message);
     }
+  };
+
+  const disconnect = () => {
+    setConnected(false);
+    
+    setHost("");
+    setUsername("");
+    setPassword("");
   };
 
   return (
@@ -63,15 +71,12 @@ export default function App() {
         />
       ) : (
         <div>
-          <iframe class="inputCmd"
-            src="/InputCmd.html"
-            title="InputCmd"
-          />
           <TerminalView
             host={host}
             username={username}
             password={password}
-            initialText={"Entrez vos identifiants ci-dessus pour vous connecter.\r\n"}
+            initialText={"Connecté à " + host + "\r\n"}
+            onDisconnect={disconnect}
           />
         </div>
       )}

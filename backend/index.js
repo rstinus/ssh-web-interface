@@ -28,7 +28,7 @@ app.post('/api/session', (req, res) => {
     });
   }
 
-  // Vérifiez les identifiants (exemple simple)
+  // Vérifiez les identifiants
   if (username === "rstinusssh" && password === "SSH27102006*") {
     return res.json({ 
       success: true, 
@@ -41,23 +41,6 @@ app.post('/api/session', (req, res) => {
   res.status(401).json({ 
     success: false, 
     error: 'Identifiants incorrects' 
-  });
-});
-
-app.post('/executer-commande', (req, res) => {
-  const commande = req.body.commande;
-
-  // Validation sécurisé : n'autoriser que certaines commandes et arguments
-  const commandesAutorisees = ['ls', 'mkdir', 'rm'];
-  const [cmd, ...args] = commande.split(' ');
-  if (!commandesAutorisees.includes(cmd)) {
-    return res.status(400).json({ resultat: 'Commande non autorisée.' });
-  }
-
-  // Exécution sécurisée
-  exec(commande, (error, stdout, stderr) => {
-    if (error) return res.json({ resultat: `Erreur : ${error.message}` });
-    res.json({ resultat: stdout || stderr });
   });
 });
 
