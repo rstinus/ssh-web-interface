@@ -15,12 +15,9 @@ app.use(cors());
 app.use(express.static(path.join(__dirname, "../frontend/dist")));
 app.use(express.json());
 
-// Pour toute autre route, renvoie index.html
-
 app.post('/api/session', (req, res) => {
   const { host, username, password } = req.body;
 
-  // Validation basique
   if (!host || !username || !password) {
     return res.status(400).json({ 
       success: false, 
@@ -28,19 +25,10 @@ app.post('/api/session', (req, res) => {
     });
   }
 
-  // Vérifiez les identifiants
-  if (username === "rstinusssh" && password === "SSH27102006*") {
-    return res.json({ 
-      success: true, 
-      message: 'Connexion réussie',
-      sessionId: Date.now() 
-    });
-  }
-
-  // Identifiants incorrects
-  res.status(401).json({ 
-    success: false, 
-    error: 'Identifiants incorrects' 
+  // On accepte la demande, SSH vérifiera les identifiants
+  res.json({ 
+    success: true, 
+    sessionId: Date.now()
   });
 });
 
@@ -56,6 +44,18 @@ wss.on('connection', (ws) => {
     if (msg.type === 'connect') {
       const { host, username, password } = msg;
       const conn = new Client();
+
+      
+      // Ajout de whitelist pour éviter les abus
+      const ALLOWED_HOSTS = ['127.0.0.1', 'remystinus.fr'];
+
+      if (!ALLOWED_HOSTS.includes(host)) {
+        ws.send(JSON.stringify({
+          type: 'error',
+          error: 'Host non autorisé'
+        }));
+        return;
+      }
 
       conn.on('ready', () => {
         console.log(`_/ SSH connecté à ${host}`);
@@ -85,7 +85,7 @@ wss.on('connection', (ws) => {
         console.error('Erreur SSH :', err.message);
         ws.send(JSON.stringify({ type: 'error', error: err.message }));
       })
-      .connect({ host, username, password });
+      .connect({ host, username, password, readyTimeout: 10000 });
     }
 
     // Quand le navigateur envoie une touche
